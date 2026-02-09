@@ -1,5 +1,7 @@
-import customtkinter, mido, json
+import customtkinter, mido, json, pydirectinput
 from logic import play, makeSheet
+
+pydirectinput.PAUSE = 0
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -16,14 +18,13 @@ class App(customtkinter.CTk):
         
     def playback(self):
         # Prep
-        tst = "TestMiddleC.mid"
+        tst = "Test2.mid"
         mid = mido.MidiFile(tst)
 
         with open('mapping.json', 'r') as file: #Read keymapping from json file
             data = file.read()
-
         mapping = json.loads(data) #turn read json into python dictionary
 
-
-        sheetMusic = makeSheet(mid)
-        play(sheetMusic, mapping)
+        # Program
+        sheet_music = makeSheet(mid)
+        play(sheet_music, mapping)

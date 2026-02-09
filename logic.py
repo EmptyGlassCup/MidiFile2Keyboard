@@ -1,4 +1,4 @@
-import time, pyautogui
+import time, pydirectinput, mido
 
 def makeSheet(mid):
     class Note:
@@ -16,12 +16,13 @@ def makeSheet(mid):
     return(sheetMusic)
 
 def play(sheetMusic, mapping):
+    time.sleep(5)
 
     for note in sheetMusic:
         time.sleep(note.time)
 
         if note.type == 'note_on':
-            pyautogui.keyDown(mapping[note.value])
+            pydirectinput.keyDown(mapping[note.value])
             print(mapping[note.value])
         if note.type == 'note_off':
-            pyautogui.keyUp(mapping[note.value])
+            pydirectinput.keyUp(mapping[note.value])
