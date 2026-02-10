@@ -1,7 +1,7 @@
-import customtkinter, mido, json
+import customtkinter, mido, json, threading
 from logic import play, makeSheet
 
-customtkinter.set_appearance_mode("System")
+customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
 
@@ -9,44 +9,77 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__() 
 
-        # Decoration!
+        # Setup
         self.title("Midi to Keyboard")
-        self.geometry("400x150")
+        self.geometry("500x160")
+        self.resizable(False, False) # Disables Full Screen
+        self.song_chosen = False
 
-        # Widgets
-        self.grid_columnconfigure(0, weight = 1) #Centres widgets
+        # Frame configuration
+            # Frame for buttons
+        self.interactive_frame = customtkinter.CTkFrame(self)
+        self.interactive_frame.grid(row = 2, column = 0, sticky = 'ew', padx = 20, pady=(10, 5))
+        self.interactive_frame.grid_columnconfigure(0, weight=1)
+        self.interactive_frame.grid_columnconfigure(3, weight=1)
+            # Frame for info
+        self.info_frame = customtkinter.CTkFrame(self)
+        self.info_frame.grid(row = 3, column = 0, sticky = 'ew', padx = 20)
 
-            #Main Header
+
+        self.grid_columnconfigure(0, weight = 1) #Centres widgets on Window
+        #Widgets on Window
+                #Main Header
         self.title_label = customtkinter.CTkLabel(self, text = "Midi To Keyboard", font = customtkinter.CTkFont(size = 20, weight = 'bold'))
         self.title_label.grid(row=0, column=0)
 
-            #Sub Header
+                #Sub Header
         self.sub_label = customtkinter.CTkLabel(self, text = "By EmptyCup", font = customtkinter.CTkFont(size = 17, weight = 'normal'))
         self.sub_label.grid(row=1, column=0)
 
-            #Choose File button
-        self.file_button = customtkinter.CTkButton(self, text="Choose File", command = self.file_select)
-        self.file_button.grid(row = 2, column = 0, pady=10)
+        #Widgets in Interactive Frame
+                #Choose File button
+        self.file_button = customtkinter.CTkButton(self.interactive_frame, text="Choose File", command = self.file_select)
+        self.file_button.grid(row = 0, column = 1, pady = 10, padx = 5)
 
-            #Playback Button
-        self.play_button = customtkinter.CTkButton(self, text="Play", command=self.playback)
-        self.play_button.grid(row = 3, column = 0)
-    
-    #Function for choosing a file
+                #Playback Button
+        self.play_button = customtkinter.CTkButton(self.interactive_frame, text="Play", command=self.playback)
+        self.play_button.grid(row = 0, column = 2)
+
+        #Widgets in Information Frame
+            # 'Current File: ' Text
+        self.current_file = customtkinter.CTkLabel(self.info_frame, text = 'Current File: ')
+        self.current_file.grid(row =0, column = 0, padx = (10, 0))
+
+            #Text for chosen file
+        self.chosen_file = customtkinter.CTkLabel(self.info_frame, text = "None")
+        self.chosen_file.grid(row = 0, column = 1)
+
+    #Functions    
+        #Function for choosing a file
     def file_select(self):
         self.file = customtkinter.filedialog.askopenfilename(filetypes=[("Midi File", "*.mid")]) # Allows the user to choose a midi file
-        print(self.file)
+        if self.file == '': #If the user exits the file explorer window
+            self.chosen_file.configure(text = 'None')
+        else:
+            self.chosen_file.configure(text = self.file)
+            self.song_chosen = True
+
         
-    # Function for playing back Keyboard Inputs
+     # Function for playing back Keyboard Inputs
     def playback(self):
 
-       # Preperation
-        mid = mido.MidiFile(self.file) # Turn midi file into mido object
+        if self.song_chosen:  #Has a file been chosen by the user?
+            #Preperation
+            mid = mido.MidiFile(self.file) # Turn midi file into mido object
 
-        with open('mapping.json', 'r') as file: #Read keymapping from json file
-            data = file.read()
-        mapping = json.loads(data) #turn read json into python dictionary
+            with open('mapping.json', 'r') as file: # Default is Heartopia Mapping
+                data = file.read()
+            mapping = json.loads(data) #turn read json into python dictionary
 
-        # Playback
-        sheet_music = makeSheet(mid)
-        play(sheet_music, mapping)
+            # Playback
+            sheet_music = makeSheet(mid)
+
+            thread = threading.Thread(target = play, args=(sheet_music, mapping), daemon=True)
+            thread.start()
+        else:
+            self.chosen_file.configure(text = "No File Chosen")
