@@ -1,4 +1,5 @@
-import time, pydirectinput, mido
+import time, pydirectinput
+pydirectinput.PAUSE = 0
 
 def makeSheet(mid):
     class Note:
@@ -21,8 +22,7 @@ def play(sheetMusic, mapping):
     for note in sheetMusic:
         time.sleep(note.time)
 
-        if note.type == 'note_on':
+        if note.type == 'note_on' and note.value in mapping:
             pydirectinput.keyDown(mapping[note.value])
-            print(mapping[note.value])
-        if note.type == 'note_off':
+        if note.type == 'note_off' and note.value in mapping:
             pydirectinput.keyUp(mapping[note.value])
