@@ -1,6 +1,10 @@
-import customtkinter, mido, json, threading, time
+import customtkinter
+import mido
+import json
+import threading
 from logic import play, makeSheet
 
+# GUI Appearance
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
@@ -17,7 +21,7 @@ class App(customtkinter.CTk):
         self.song_chosen = False
 
         self.playing = False
-        self.threadEvent = threading.Event()
+        self.stop_event = threading.Event()
 
         # Frame configuration
             # Frame for buttons
@@ -52,11 +56,11 @@ class App(customtkinter.CTk):
         #Widgets in Information Frame
             # 'Current File: ' Text
         self.current_file = customtkinter.CTkLabel(self.info_frame, text = 'Current File: None')
-        self.current_file.grid(row =0, column = 0)
+        self.current_file.grid(row =0, column = 0, padx=(5,0))
 
             #Text for Countdown
         self.countdown = customtkinter.CTkLabel(self.info_frame, text = '')
-        self.countdown.grid(row=1, column = 0, sticky = 'w')
+        self.countdown.grid(row=1, column = 0, sticky = 'w', padx=(5,0))
 
     #Functions    
         #Function for choosing a file
@@ -84,19 +88,19 @@ class App(customtkinter.CTk):
                 # Modify playing information
                 self.playing = True
                 self.play_button.configure(text = "Stop") 
-                self.threadEvent.clear() # Allows playback thread to run
+                self.stop_event.clear() # Allows playback thread to run
                 self.countdown.configure(text = "Starting in 5 seconds. [Switch to your desired program!]")
 
                 # Playback
                 sheet_music = makeSheet(mid)
 
-                thread = threading.Thread(target = play, args=(sheet_music, mapping, self.threadEvent), daemon=True)
+                thread = threading.Thread(target = play, args=(sheet_music, mapping, self.stop_event), daemon=True)
                 thread.start()
  
             else:
                 self.playing = False
                 self.play_button.configure(text = "Play")
                 self.countdown.configure(text = '')
-                self.threadEvent.set() #Stops playback
+                self.stop_event.set() #Stops playback
         else:
             self.current_file.configure(text = "Current File: NO FILE CHOSEN")

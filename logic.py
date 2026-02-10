@@ -1,27 +1,29 @@
-import time, pydirectinput
-pydirectinput.PAUSE = 0
+import time
+import pydirectinput
+pydirectinput.PAUSE = 0 #Disables pause for pydirectinput to preserve timing accuracy
+
+class Note:
+    def __init__(self, type, value, time):
+        self.type = type # 'note_on' or 'note_off'
+        self.value = value # 'the number value for the note'
+        self.time = time
 
 def makeSheet(mid):
-    class Note:
-        def __init__(self, type, value, time):
-            self.type = type # 'note_on' or 'note_off'
-            self.value = value # 'the number value for the note'
-            self.time = time
 
-    sheetMusic = []
+    sheet_music = []
 
     for msg in mid:
         if not msg.is_meta:
-            sheetMusic.append(Note(msg.type, str(msg.note), msg.time)) # msg.note into string as json file only takes srings as keys
+            sheet_music.append(Note(msg.type, str(msg.note), msg.time)) # msg.note into string as json file only takes srings as keys
     
-    return(sheetMusic)
+    return(sheet_music)
 
-def play(sheetMusic, mapping, threadEvent):
+def play(sheet_music, mapping, thread_event):
 
-    time.sleep(5)
+    time.sleep(5) #Gives user time to switch to program/game
 
-    for note in sheetMusic:
-        if threadEvent.is_set(): # If it is already playing, stop playing.
+    for note in sheet_music:
+        if thread_event.is_set(): # If it is already playing, stop playing.
             break
 
         time.sleep(note.time)
