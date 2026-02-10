@@ -16,10 +16,14 @@ def makeSheet(mid):
     
     return(sheetMusic)
 
-def play(sheetMusic, mapping):
+def play(sheetMusic, mapping, threadEvent):
+
     time.sleep(5)
 
     for note in sheetMusic:
+        if threadEvent.is_set(): # If it is already playing, stop playing.
+            break
+
         time.sleep(note.time)
 
         if note.type == 'note_on' and note.value in mapping:

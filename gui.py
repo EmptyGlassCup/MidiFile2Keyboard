@@ -1,4 +1,4 @@
-import customtkinter, mido, json, threading
+import customtkinter, mido, json, threading, time
 from logic import play, makeSheet
 
 customtkinter.set_appearance_mode("Dark")
@@ -11,9 +11,13 @@ class App(customtkinter.CTk):
 
         # Setup
         self.title("Midi to Keyboard")
-        self.geometry("500x160")
+        self.geometry("500x200")
         self.resizable(False, False) # Disables Full Screen
+
         self.song_chosen = False
+
+        self.playing = False
+        self.threadEvent = threading.Event()
 
         # Frame configuration
             # Frame for buttons
@@ -47,39 +51,52 @@ class App(customtkinter.CTk):
 
         #Widgets in Information Frame
             # 'Current File: ' Text
-        self.current_file = customtkinter.CTkLabel(self.info_frame, text = 'Current File: ')
-        self.current_file.grid(row =0, column = 0, padx = (10, 0))
+        self.current_file = customtkinter.CTkLabel(self.info_frame, text = 'Current File: None')
+        self.current_file.grid(row =0, column = 0)
 
-            #Text for chosen file
-        self.chosen_file = customtkinter.CTkLabel(self.info_frame, text = "None")
-        self.chosen_file.grid(row = 0, column = 1)
+            #Text for Countdown
+        self.countdown = customtkinter.CTkLabel(self.info_frame, text = '')
+        self.countdown.grid(row=1, column = 0, sticky = 'w')
 
     #Functions    
         #Function for choosing a file
     def file_select(self):
         self.file = customtkinter.filedialog.askopenfilename(filetypes=[("Midi File", "*.mid")]) # Allows the user to choose a midi file
         if self.file == '': #If the user exits the file explorer window
-            self.chosen_file.configure(text = 'None')
+            self.current_file.configure(text = 'Current File: None')
         else:
-            self.chosen_file.configure(text = self.file)
+            self.current_file.configure(text = f"Current File: {self.file}")
             self.song_chosen = True
 
         
-     # Function for playing back Keyboard Inputs
+        # Function for playing back Keyboard Inputs
     def playback(self):
 
         if self.song_chosen:  #Has a file been chosen by the user?
-            #Preperation
-            mid = mido.MidiFile(self.file) # Turn midi file into mido object
+            if not self.playing:
+                #Preperation
+                mid = mido.MidiFile(self.file) # Turn midi file into mido object
 
-            with open('mapping.json', 'r') as file: # Default is Heartopia Mapping
-                data = file.read()
-            mapping = json.loads(data) #turn read json into python dictionary
+                with open('mapping.json', 'r') as file: # Default is Heartopia Mapping
+                    data = file.read()
+                mapping = json.loads(data) #turn read json into python dictionary
 
-            # Playback
-            sheet_music = makeSheet(mid)
+                # Modify playing information
+                self.playing = True
+                self.play_button.configure(text = "Stop") 
+                self.threadEvent.clear() # Allows playback thread to run
+                self.countdown.configure(text = "Starting in 5 seconds. [Switch to your desired program!]")
 
-            thread = threading.Thread(target = play, args=(sheet_music, mapping), daemon=True)
-            thread.start()
+                # Playback
+                sheet_music = makeSheet(mid)
+
+                thread = threading.Thread(target = play, args=(sheet_music, mapping, self.threadEvent), daemon=True)
+                thread.start()
+ 
+            else:
+                self.playing = False
+                self.play_button.configure(text = "Play")
+                self.countdown.configure(text = '')
+                self.threadEvent.set() #Stops playback
         else:
-            self.chosen_file.configure(text = "No File Chosen")
+            self.current_file.configure(text = "Current File: NO FILE CHOSEN")
