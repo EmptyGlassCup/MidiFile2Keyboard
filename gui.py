@@ -94,8 +94,8 @@ class App(customtkinter.CTk):
                 # Playback
                 sheet_music = makeSheet(mid)
 
-                thread = threading.Thread(target = play, args=(sheet_music, mapping, self.stop_event), daemon=True)
-                thread.start()
+                self.thread = threading.Thread(target = play, args=(sheet_music, mapping, self.stop_event), daemon=True)
+                self.thread.start()
  
             else:
                 self.playing = False
